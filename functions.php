@@ -298,3 +298,70 @@ if ( ! function_exists( 'glv_login_logo_url_title' ) ) {
 
 	add_filter( 'login_headertitle', 'glv_login_logo_url_title' );
 }
+
+
+if ( ! function_exists( 'glv_expired_cookie_logged_in' ) ) {
+	/**
+	 * Fires immediately before the logged-in authentication cookie is set.
+	 *
+	 * @since 2.6.0
+	 * @since 4.9.0 The `$token` parameter was added.
+	 *
+	 * @param string $logged_in_cookie The logged-in cookie.
+	 * @param int $expire The time the login grace period expires as a UNIX timestamp.
+	 *                                 Default is 12 hours past the cookie's expiration time.
+	 * @param int $expiration The time when the logged-in authentication cookie expires as a UNIX timestamp.
+	 *                                 Default is 14 days from now.
+	 * @param int $user_id User ID.
+	 * @param string $scheme Authentication scheme. Default 'logged_in'.
+	 * @param string $token User's session token to use for this cookie.
+	 */
+//	add_action( 'set_logged_in_cookie', $logged_in_cookie, $expire, $expiration, $user_id, 'logged_in', $token );
+	add_action( 'auth_cookie_expiration', 'glv_expired_cookie_logged_in', 10, 3 );
+
+	function glv_expired_cookie_logged_in( $day, $user_id, $remember ) {
+
+		$expire = 365 * DAY_IN_SECONDS;
+
+		return $expire;
+	}
+}
+/**
+ * Redirect user after successful login.
+ *
+ * @param string $redirect_to URL to redirect to.
+ * @param string $request URL the user is coming from.
+ * @param object $user Logged user's data.
+ *
+ * @return string
+ */
+
+if ( ! function_exists( 'glv_login_redirect' ) ) {
+	function glv_login_redirect( $redirect_to, $request, $user ) {
+		//is there a user to check?
+		if ( class_exists( 'WooCommerce' ) ) {
+			if ( WC()->cart->get_cart_contents_count() != 0 ) {
+				$redirect_to = get_permalink( get_option( 'woocommerce_myaccount_page_id' ) );
+
+//			 Do something fun
+			}
+		}
+
+		return $redirect_to;
+	}
+
+	add_filter( 'login_redirect', 'glv_login_redirect', 30, 3 );
+}
+
+if ( ! function_exists( 'glv_always_remember_choice' ) ) {
+	add_action( 'wp_login', 'glv_always_remember_choice', 10, 2 );
+	/*	Two parameters are not used, but must be specified for this Action */
+	function glv_always_remember_choice( $user_login, $user ) {
+		/*	Check first to be sure we are coming from a WordPress Login form,
+			not some automated login process.
+		*/
+//		if ( empty( $_POST['rememberme'] ) ) {
+		$_POST['rememberme'] = true;
+//		}
+	}
+}
